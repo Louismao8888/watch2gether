@@ -439,7 +439,10 @@
         let subtitles = [];
         let isSeeking = false;
         let lastSyncTime = 0;
+        let isSyncing = false;
         const SYNC_THRESHOLD = 0.5;
+        const SYNC_BUFFER = 0.2;
+        const SYNC_DURATION = 1000;
 
         const videoPlayer = document.getElementById('videoPlayer');
         const videoPlaceholder = document.getElementById('videoPlaceholder');
@@ -657,22 +660,52 @@
         socket.on('seek', (time) => {
             if (!videoPlayer.src) return;
             if (isHost) return; // 房主不接收同步
-            const diff = Math.abs(videoPlayer.currentTime - time);
+            if (isSyncing) return; // 正在同步中，忽略新的同步请求
+            
+            const currentTime = videoPlayer.currentTime;
+            const diff = Math.abs(currentTime - time);
+            
             if (diff > SYNC_THRESHOLD) {
-                isSeeking = true;
-                videoPlayer.currentTime = time;
+                // 使用平滑同步
+                smoothSync(currentTime, time);
             }
         });
+
+        function smoothSync(fromTime, toTime) {
+            isSyncing = true;
+            isSeeking = true;
+            
+            const duration = SYNC_DURATION;
+            const startTime = Date.now();
+            const diff = toTime - fromTime;
+            
+            function updateSync() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                const currentTime = fromTime + diff * progress;
+                videoPlayer.currentTime = currentTime;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateSync);
+                } else {
+                    isSyncing = false;
+                    isSeeking = false;
+                }
+            }
+            
+            updateSync();
+        }
 
         setInterval(() => {
             if (currentRoom && isHost && videoPlayer.src) {
                 const now = Date.now();
-                if (now - lastSyncTime > 1000) {
+                if (now - lastSyncTime > 2000) { // 减少广播频率到2秒
                     lastSyncTime = now;
                     socket.emit('seek', currentRoom, videoPlayer.currentTime);
                 }
             }
-        }, 1000);
+        }, 2000);
 
         sendBtn.addEventListener('click', sendMessage);
         messageInput.addEventListener('keypress', (e) => {
