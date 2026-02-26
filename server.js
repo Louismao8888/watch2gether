@@ -77,7 +77,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chat-message', (roomId, message) => {
-    socket.to(roomId).emit('chat-message', message);
+    socket.to(roomId).emit('chat-message', message); // 只发送给房间内其他用户
   });
 
   socket.on('emoji', (roomId, emoji) => {

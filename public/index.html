@@ -682,14 +682,17 @@
         function sendMessage() {
             const text = messageInput.value.trim();
             if (text && currentRoom) {
-                addMessage(username, text, true);
+                addMessage(username, text, true); // 本地显示自己的消息
                 socket.emit('chat-message', currentRoom, { username, text });
                 messageInput.value = '';
             }
         }
 
         socket.on('chat-message', (msg) => {
-            addMessage(msg.username, msg.text, false);
+            // 只显示其他人的消息
+            if (msg.username !== username) {
+                addMessage(msg.username, msg.text, false);
+            }
         });
 
         function addMessage(user, text, isOwn) {
