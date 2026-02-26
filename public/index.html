@@ -443,6 +443,10 @@
         const SYNC_THRESHOLD = 0.5;
         const SYNC_BUFFER = 0.2;
         const SYNC_DURATION = 1000;
+        
+        // 保存连接状态，用于断线重连
+        let reconnectAttempts = 0;
+        const MAX_RECONNECT_ATTEMPTS = 5;
 
         const videoPlayer = document.getElementById('videoPlayer');
         const videoPlaceholder = document.getElementById('videoPlaceholder');
@@ -579,10 +583,41 @@
         socket.on('connect', () => {
             statusIndicator.textContent = '🟢 已连接';
             statusIndicator.className = 'status-indicator connected';
+            
+            // 重连成功后，尝试重新加入之前的房间
+            if (currentRoom && username) {
+                socket.emit('join-room', currentRoom, username);
+                console.log('重新加入房间:', currentRoom);
+            }
+            
+            // 重置重连尝试次数
+            reconnectAttempts = 0;
         });
 
         socket.on('disconnect', () => {
             statusIndicator.textContent = '🔴 已断开';
+            statusIndicator.className = 'status-indicator disconnected';
+        });
+
+        socket.on('reconnect', () => {
+            statusIndicator.textContent = '🟢 重新连接';
+            statusIndicator.className = 'status-indicator connected';
+            
+            // 重连成功后，尝试重新加入之前的房间
+            if (currentRoom && username) {
+                socket.emit('join-room', currentRoom, username);
+                console.log('重新加入房间:', currentRoom);
+            }
+        });
+
+        socket.on('reconnect_attempt', (attemptNumber) => {
+            reconnectAttempts = attemptNumber;
+            statusIndicator.textContent = `🔄 重连中...(${attemptNumber}/${MAX_RECONNECT_ATTEMPTS})`;
+            statusIndicator.className = 'status-indicator disconnected';
+        });
+
+        socket.on('reconnect_failed', () => {
+            statusIndicator.textContent = '❌ 重连失败';
             statusIndicator.className = 'status-indicator disconnected';
         });
 
