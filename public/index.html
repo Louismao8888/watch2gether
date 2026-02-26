@@ -392,7 +392,10 @@
                 <div class="room-info">
                     <input type="text" id="usernameInput" placeholder="输入你的昵称...">
                     <input type="text" id="roomIdInput" placeholder="输入房间号...">
-                    <button id="joinRoomBtn">加入房间 / 创建房间</button>
+                    <div style="display: flex; gap: 10px; margin-top: 8px;">
+                        <button id="joinRoomBtn" style="flex: 1;">加入房间</button>
+                        <button id="createRoomBtn" style="flex: 1;">创建房间</button>
+                    </div>
                 </div>
                 <div class="file-upload">
                     <label for="videoInput">📹 上传视频文件</label>
@@ -535,7 +538,18 @@
 
         joinRoomBtn.addEventListener('click', () => {
             const user = usernameInput.value.trim() || '匿名用户';
-            const room = roomIdInput.value.trim() || generateRoomId();
+            const room = roomIdInput.value.trim();
+            
+            if (!currentRoom && room) {
+                username = user;
+                currentRoom = room;
+                socket.emit('join-room', room, username);
+            }
+        });
+
+        document.getElementById('createRoomBtn').addEventListener('click', () => {
+            const user = usernameInput.value.trim() || '匿名用户';
+            const room = generateRoomId();
             
             if (!currentRoom) {
                 username = user;
