@@ -590,6 +590,7 @@
 
         socket.on('user-joined', (users) => {
             updateUsersList(users, isHost ? socket.id : null);
+            usersList.style.display = 'block';
         });
 
         socket.on('user-left', (users, hostId) => {
