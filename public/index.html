@@ -536,27 +536,37 @@
             }
         }
 
-        joinRoomBtn.addEventListener('click', () => {
+        function joinOrCreateRoom() {
             const user = usernameInput.value.trim() || '匿名用户';
             const room = roomIdInput.value.trim();
             
-            if (!currentRoom && room) {
+            if (room) {
+                // 无论是否在房间中，都先退出当前房间
+                if (currentRoom) {
+                    socket.leave(currentRoom);
+                }
+                
                 username = user;
                 currentRoom = room;
                 socket.emit('join-room', room, username);
             }
-        });
+        }
+
+        joinRoomBtn.addEventListener('click', joinOrCreateRoom);
 
         document.getElementById('createRoomBtn').addEventListener('click', () => {
             const user = usernameInput.value.trim() || '匿名用户';
-            const room = generateRoomId();
+            const room = roomIdInput.value.trim() || generateRoomId();
             
-            if (!currentRoom) {
-                username = user;
-                currentRoom = room;
-                roomIdInput.value = room;
-                socket.emit('join-room', room, username);
+            // 无论是否在房间中，都先退出当前房间
+            if (currentRoom) {
+                socket.leave(currentRoom);
             }
+            
+            username = user;
+            currentRoom = room;
+            roomIdInput.value = room;
+            socket.emit('join-room', room, username);
         });
 
         function generateRoomId() {

@@ -32,7 +32,15 @@ io.on('connection', (socket) => {
       };
     }
     
-    rooms[roomId].users.push({ id: socket.id, username });
+    // 检查用户是否已在房间中
+    const existingUserIndex = rooms[roomId].users.findIndex(u => u.id === socket.id);
+    if (existingUserIndex !== -1) {
+      // 更新用户名
+      rooms[roomId].users[existingUserIndex].username = username;
+    } else {
+      // 添加新用户
+      rooms[roomId].users.push({ id: socket.id, username });
+    }
     
     io.to(roomId).emit('user-joined', rooms[roomId].users);
     socket.emit('room-state', {
@@ -42,7 +50,7 @@ io.on('connection', (socket) => {
       users: rooms[roomId].users
     });
     
-    console.log(`User ${username} joined room ${roomId}`);
+    console.log(`User ${username} ${existingUserIndex !== -1 ? 'updated in' : 'joined'} room ${roomId}`);
   });
 
   socket.on('play', (roomId, time) => {
