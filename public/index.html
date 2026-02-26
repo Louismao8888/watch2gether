@@ -599,6 +599,7 @@
         });
 
         socket.on('user-joined', (users) => {
+            // 保持当前房主状态
             updateUsersList(users, isHost ? socket.id : null);
             usersList.style.display = 'block';
         });
@@ -655,7 +656,7 @@
 
         socket.on('seek', (time) => {
             if (!videoPlayer.src) return;
-            if (isHost) return;
+            if (isHost) return; // 房主不接收同步
             const diff = Math.abs(videoPlayer.currentTime - time);
             if (diff > SYNC_THRESHOLD) {
                 isSeeking = true;
